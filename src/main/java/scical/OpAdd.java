@@ -26,4 +26,9 @@ public class OpAdd extends OpBase {
     protected SciValue compute(List<SciValue> params) {
         return params.get(0).plus(params.get(1));
     }
+
+    @Override
+    public String name() {
+        return "Addition";
+    }
 }

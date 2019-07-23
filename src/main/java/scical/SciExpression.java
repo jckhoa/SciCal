@@ -6,7 +6,6 @@
 package scical;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.lang.Character;
 import java.util.List;
@@ -28,22 +27,21 @@ public class SciExpression {
             put("cd", new SciValue(1.0, 0, 0, 0, 0, 0, 0, 1));
         }
     };
-    HashMap<String, OpBase> shortOperators = new HashMap<>();
-    HashMap<String, OpBase> longOperators = new HashMap<>();
-    
+    HashMap<String, OpBase> operators = new HashMap<>();
+
     public SciExpression() {
         initOperators();
     }
     
     private void initOperators() {
-        shortOperators.put("/", new OpDivide());
-        shortOperators.put("*", new OpMultiply());
-        shortOperators.put("%", new OpModulo());
-        shortOperators.put("^", new OpPower());
-        shortOperators.put("+", new OpAdd());
-        shortOperators.put("-", new OpSubtract());
+        operators.put("/", new OpDivide());
+        operators.put("*", new OpMultiply());
+        operators.put("%", new OpModulo());
+        operators.put("^", new OpPower());
+        operators.put("+", new OpAdd());
+        operators.put("-", new OpSubtract());
 
-        longOperators.put("ln", new OpLn());        
+        operators.put("ln", new OpLn());        
     }
 
     public ArrayList<Token> getReversePolishNotation(ArrayList<Token> tokens) throws SciParseException {
@@ -99,22 +97,22 @@ public class SciExpression {
         } else if (unit.length() == 2) {
             SciValue result = baseUnit.get(unit);
             if (result != null) return result;
-            result = baseUnit.get(unit.substring(1, 1));
+            result = baseUnit.get(unit.substring(1, 2));
             if (result != null) {
-                Double prefix = SciUnit.prefix.get(unit.substring(0,0));
+                Double prefix = SciUnit.prefix.get(unit.substring(0,1));
                 if (prefix != null) return result.multiply(new SciValue(prefix));
             } 
         } else {
             SciValue result = baseUnit.get(unit);
             if (result != null) return result;
-            result = baseUnit.get(unit.substring(2, unit.length()-1));
+            result = baseUnit.get(unit.substring(2, unit.length()));
             if (result != null) {
-                Double prefix = SciUnit.prefix.get(unit.substring(0,1));
+                Double prefix = SciUnit.prefix.get(unit.substring(0,2));
                 if (prefix != null) return result.multiply(new SciValue(prefix));
             }
-            result = baseUnit.get(unit.substring(1, unit.length()-1));
+            result = baseUnit.get(unit.substring(1, unit.length()));
             if (result != null) {
-                Double prefix = SciUnit.prefix.get(unit.substring(0,0));
+                Double prefix = SciUnit.prefix.get(unit.substring(0,1));
                 if (prefix != null) return result.multiply(new SciValue(prefix));                
             }
         }
@@ -131,11 +129,17 @@ public class SciExpression {
             } else if (tk.isType(TokenBase.Type.Unit)) {
                 output.add(parseUnit(tk.text));
             } else {
-                var op = shortOperators.get(tk.getText());
+                System.out.print("Output: ");
+                printValueList(output);                
+                var op = operators.get(tk.getText());
+                System.out.print("Op: ");
+                System.out.println(op.toString());
                 List<SciValue> args = output.subList(output.size() - op.operands(), output.size());
+                System.out.print("Arguments: ");
+                printValueList(args);
                 SciValue val = op.execute(args);
                 args.clear();
-                output.add(val);                
+                output.add(val);     
             }
         }
         
@@ -145,6 +149,12 @@ public class SciExpression {
         } else return output.get(0);
     }
     
+    public void printValueList(List<SciValue> values) {
+        for (var value: values) {
+            System.out.print(value.toString() + ", ");
+        }
+        System.out.println();
+    }
     public ArrayList<Token> parse(String expression) {
         ArrayList<Token> tokens = new ArrayList<>();
         ParseToken parseToken = new ParseToken("", ParseType.None);
@@ -162,7 +172,7 @@ public class SciExpression {
                 else if (c == '+' || c == '-') parseSignedOperators(c, i, parseToken, tokens, isLastWhiteChar);
                 else if (c == '.') parseDot(c, i, parseToken, tokens, isLastWhiteChar);
                 else if (c == 'e') parseE(c, i, parseToken, tokens, isLastWhiteChar); 
-                else if (shortOperators.containsKey("" + c)) parseShortOperators(c, i, parseToken, tokens);
+                else if (operators.containsKey("" + c)) parseShortOperators(c, i, parseToken, tokens);
                 else if (Character.isDigit(c)) parseDigit(c, i, parseToken, tokens, isLastWhiteChar);                          
                 else if (Character.isAlphabetic(c)) parseAlphabetic(c, i, parseToken, tokens, isLastWhiteChar);
                 else throw new SciParseException("The " + String.valueOf(i) + "th character '" + c + "' is illegal.");
@@ -198,7 +208,7 @@ public class SciExpression {
             case ShortOp: case LongOp:
                 throw new SciParseException(makeErrorMessage(c, pos, "The expression must not end with an operator."));    
             case Str:
-                OpBase op = longOperators.get(tk.str);
+                OpBase op = operators.get(tk.str);
                 if (op != null) throw new SciParseException(makeErrorMessage(c, pos, "The expression must not end with an operator."));
                 else {
                     //kk maybe check if the unit exist
@@ -219,17 +229,17 @@ public class SciExpression {
             case None: break;
             case Int: case FNum: case FNumEInt: case SNum:
                 if (c == ')') tokens.add(new TokenNum(tk.str));
-                else tokens.add(new TokenOperator("*", shortOperators.get("*")));
+                else tokens.add(new TokenOperator("*", operators.get("*")));
                 break;
             case Sign: case Dot: case FNumE: case FNumEDot: case FNumES:
                 throw new SciParseException(makeErrorMessage(c, pos, "The number before the character is illegal.'"));
             case ShortOp:
-                if (c == '(') tokens.add(new TokenOperator(tk.str, shortOperators.get(tk.str)));
+                if (c == '(') tokens.add(new TokenOperator(tk.str, operators.get(tk.str)));
                 else throw new SciParseException(makeErrorMessage(c, pos, " An operator before ')' is illegal"));
                 break;
             case LongOp:
                 if (c == '(') {
-                    OpBase op = longOperators.get(tk.str);
+                    OpBase op = operators.get(tk.str);
                     if (op != null) tokens.add(new TokenOperator(tk.str, op));
                     else {
                         throw new SciParseException(makeErrorMessage(c, pos
@@ -240,7 +250,7 @@ public class SciExpression {
                 break;
             case Str:
                 if (c == '(') {
-                    OpBase op = longOperators.get(tk.str);
+                    OpBase op = operators.get(tk.str);
                     if (op != null) tokens.add(new TokenOperator(tk.str, op));
                     else {
                         throw new SciParseException(makeErrorMessage(c, pos
@@ -303,10 +313,10 @@ public class SciExpression {
                 }
                 return;            
             case ShortOp:
-                tokens.add(new TokenOperator(tk.str, shortOperators.get(tk.str)));
+                tokens.add(new TokenOperator(tk.str, operators.get(tk.str)));
                 break;
             case LongOp:
-                OpBase op = longOperators.get(tk.str);
+                OpBase op = operators.get(tk.str);
                 if (op != null) tokens.add(new TokenOperator(tk.str, op));
                 else {        
                     throw new SciParseException(makeErrorMessage(c, pos
@@ -314,7 +324,7 @@ public class SciExpression {
                 }
                 break;
             case Str:
-                OpBase op1 = longOperators.get(tk.str);
+                OpBase op1 = operators.get(tk.str);
                 if (op1 != null) tokens.add(new TokenOperator(tk.str, op1));
                 else {                    
                     //kk maybe check if the unit exist
@@ -372,10 +382,10 @@ public class SciExpression {
                     return;
                 }
             case ShortOp:
-                tokens.add(new TokenOperator(tk.str, shortOperators.get(tk.str)));
+                tokens.add(new TokenOperator(tk.str, operators.get(tk.str)));
                 break;
             case LongOp:
-                OpBase op = longOperators.get(tk.str);
+                OpBase op = operators.get(tk.str);
                 if (op != null) {
                     tokens.add(new TokenOperator(tk.str, op));
                     tk.str = ".";
@@ -386,12 +396,12 @@ public class SciExpression {
                 }
                 break;
             case Str:
-                OpBase op1 = longOperators.get(tk.str);
+                OpBase op1 = operators.get(tk.str);
                 if (op1 != null) tokens.add(new TokenOperator(tk.str, op1));
                 else {
                     //kk maybe check if the unit exists
                     tokens.add(new TokenUnit(tk.str));
-                    tokens.add(new TokenOperator("*", shortOperators.get("*")));
+                    tokens.add(new TokenOperator("*", operators.get("*")));
                 }
                 break;
             case ParenLeft:
@@ -412,7 +422,7 @@ public class SciExpression {
             case None: break;
             case Int: case FNum:
                 if (isLastWhiteChar) {
-                    tokens.add(new TokenOperator("*", shortOperators.get("*")));
+                    tokens.add(new TokenOperator("*", operators.get("*")));
                     tokens.add(new TokenNum(tk.str));
                     tk.str = "e";
                     tk.type = ParseType.Str;
@@ -425,11 +435,11 @@ public class SciExpression {
             case Sign: case Dot: case FNumE: case FNumEInt: case FNumEDot: case FNumES: case SNum:
                 throw new SciParseException(makeErrorMessage(c, pos, "Illegal parsing the character."));
             case ShortOp:
-                tokens.add(new TokenOperator(tk.str, shortOperators.get(tk.str)));
+                tokens.add(new TokenOperator(tk.str, operators.get(tk.str)));
                 break;
             case LongOp: case Str:
                 if (isLastWhiteChar) {
-                    OpBase op = longOperators.get(tk.str);
+                    OpBase op = operators.get(tk.str);
                     if (op != null) {
                         tokens.add(new TokenOperator(tk.str, op));
                         tk.type = ParseType.LongOp;
@@ -437,7 +447,7 @@ public class SciExpression {
                     else {
                         //kk maybe check if the unit exists
                         tokens.add(new TokenUnit(tk.str));
-                        tokens.add(new TokenOperator("*", shortOperators.get("*")));                        
+                        tokens.add(new TokenOperator("*", operators.get("*")));                        
                         tk.type = ParseType.Str;
                     }   
                     tk.str = "e";
@@ -451,7 +461,7 @@ public class SciExpression {
                 break;
             case ParenRight:
                 tokens.add(new TokenRightBracket(tk.str));
-                tokens.add(new TokenOperator("*", shortOperators.get("*")));
+                tokens.add(new TokenOperator("*", operators.get("*")));
                 break;
         }       
         tk.str = "e";
@@ -497,10 +507,10 @@ public class SciExpression {
                     return;
                 }
             case ShortOp:
-                tokens.add(new TokenOperator(tk.str, shortOperators.get(tk.str)));
+                tokens.add(new TokenOperator(tk.str, operators.get(tk.str)));
                 break;
             case LongOp:
-                OpBase op = longOperators.get(tk.str);
+                OpBase op = operators.get(tk.str);
                 if (op != null) tokens.add(new TokenOperator(tk.str, op));
                 else {
                     throw new SciParseException(makeErrorMessage(c, pos
@@ -508,12 +518,12 @@ public class SciExpression {
                 }
                 break;
             case Str:
-                OpBase op1 = longOperators.get(tk.str);
+                OpBase op1 = operators.get(tk.str);
                 if (op1 != null) tokens.add(new TokenOperator(tk.str, op1));
                 else {
                     // kk maybe check if the unit exists
                     tokens.add(new TokenUnit(tk.str));
-                    tokens.add(new TokenOperator("*", shortOperators.get("*")));
+                    tokens.add(new TokenOperator("*", operators.get("*")));
                 }
                 break;
             case ParenLeft:
@@ -521,7 +531,7 @@ public class SciExpression {
                 break;
             case ParenRight:
                 tokens.add(new TokenRightBracket(tk.str));
-                tokens.add(new TokenOperator("*", shortOperators.get("*")));
+                tokens.add(new TokenOperator("*", operators.get("*")));
                 break;
         }        
         tk.str = "" + c;
@@ -537,27 +547,27 @@ public class SciExpression {
                 return;
             case Int: case FNum: case FNumEInt: case SNum:
                 tokens.add(new TokenNum(tk.str));
-                tokens.add(new TokenOperator("*", shortOperators.get("*")));
+                tokens.add(new TokenOperator("*", operators.get("*")));
                 tk.str = "" + c;
                 tk.type = ParseType.Str;
                 return;
             case Sign: case Dot: case FNumE: case FNumEDot: case FNumES:
                 throw new SciParseException(makeErrorMessage(c, pos, "Illegal parsing the character."));
             case ShortOp:
-                tokens.add(new TokenOperator(tk.str, shortOperators.get(tk.str)));
+                tokens.add(new TokenOperator(tk.str, operators.get(tk.str)));
                 tk.str = "" + c;
                 tk.type = ParseType.Str;
                 return;
             case LongOp: case Str:
                 if (isLastWhiteChar) {
-                    OpBase op = longOperators.get(tk.str);
+                    OpBase op = operators.get(tk.str);
                     if (op != null) {
                         tokens.add(new TokenOperator(tk.str, op));
                         tk.type = ParseType.LongOp;
                     } else {
                         // kk maybe check if the unit exists
                         tokens.add(new TokenUnit(tk.str));
-                        tokens.add(new TokenOperator("*", shortOperators.get("*")));
+                        tokens.add(new TokenOperator("*", operators.get("*")));
                         tk.type = ParseType.Str;
                     }   
                     tk.str = "" + c;
@@ -570,7 +580,7 @@ public class SciExpression {
                 break;
             case ParenRight:
                 tokens.add(new TokenRightBracket(tk.str));
-                tokens.add(new TokenOperator("*", shortOperators.get("*")));
+                tokens.add(new TokenOperator("*", operators.get("*")));
                 break;
         }        
         tk.str = "" + c;

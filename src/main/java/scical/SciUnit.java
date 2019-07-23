@@ -13,26 +13,26 @@ import java.util.HashMap;
 public class SciUnit {
     public static HashMap<String, Double> prefix = new HashMap<String, Double>(){
         {
-            put("Y", 10e24);
-            put("Z", 10e21);
-            put("E", 10e18);
-            put("P", 10e15);
-            put("T", 10e12);
-            put("G", 10e9);
-            put("M", 10e6);
-            put("k", 10e3);
-            put("h", 10e2);
-            put("da", 10e1);
-            put("d", 10e-1);
-            put("c", 10e-2);
-            put("m", 10e-3);
-            put("u", 10e-6);
-            put("n", 10e-9);
-            put("p", 10e-12);
-            put("f", 10e-15);
-            put("a", 10e-18);
-            put("z", 10e-21);
-            put("y", 10e-24);
+            put("Y", 1e24);
+            put("Z", 1e21);
+            put("E", 1e18);
+            put("P", 1e15);
+            put("T", 1e12);
+            put("G", 1e9);
+            put("M", 1e6);
+            put("k", 1e3);
+            put("h", 1e2);
+            put("da", 1e1);
+            put("d", 1e-1);
+            put("c", 1e-2);
+            put("m", 1e-3);
+            put("u", 1e-6);
+            put("n", 1e-9);
+            put("p", 1e-12);
+            put("f", 1e-15);
+            put("a", 1e-18);
+            put("z", 1e-21);
+            put("y", 1e-24);
         }
     };
     

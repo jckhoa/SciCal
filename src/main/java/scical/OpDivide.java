@@ -26,4 +26,10 @@ public class OpDivide extends OpBase {
     protected SciValue compute(List<SciValue> params) {
         return params.get(0).div(params.get(1));
     }
+
+    @Override
+    public String name() {
+        return "Division";
+    }
+
 }

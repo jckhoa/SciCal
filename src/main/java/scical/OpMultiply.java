@@ -26,4 +26,9 @@ public class OpMultiply extends OpBase{
     protected SciValue compute(List<SciValue> params) {
         return params.get(0).multiply(params.get(1));
     }
+
+    @Override
+    public String name() {
+        return "Multiplication";
+    }
 }

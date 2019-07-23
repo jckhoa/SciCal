@@ -26,4 +26,9 @@ public class OpPower extends OpBase {
     protected SciValue compute(List<SciValue> params) {
         return params.get(0).power(params.get(1));
     }
+
+    @Override
+    public String name() {
+        return "Exponential";
+    }
 }

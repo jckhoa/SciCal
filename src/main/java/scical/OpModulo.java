@@ -26,4 +26,9 @@ public class OpModulo extends OpBase{
     protected SciValue compute(List<SciValue> params) {
         return params.get(0).mod(params.get(1));
     }
+
+    @Override
+    public String name() {
+        return "Modulo";
+    }
 }

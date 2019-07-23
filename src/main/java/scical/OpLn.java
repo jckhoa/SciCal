@@ -26,4 +26,9 @@ public class OpLn extends OpBase {
     protected SciValue compute(List<SciValue> params) {
         return params.get(0).ln();
     }
+
+    @Override
+    public String name() {
+        return "Natural logarithm";
+    }
 }

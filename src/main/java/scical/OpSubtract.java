@@ -26,4 +26,9 @@ public class OpSubtract extends OpBase{
     protected SciValue compute(List<SciValue> params) {
         return params.get(0).minus(params.get(1));
     }
+
+    @Override
+    public String name() {
+        return "Subtraction";
+    }
 }

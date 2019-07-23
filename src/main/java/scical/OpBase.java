@@ -16,11 +16,18 @@ abstract class OpBase {
         L2R, R2L;
     }
 
+    abstract public String name();
+    
     abstract public int precedence();
     
     abstract public Type associative();
     
     abstract public int operands();
+    
+    @Override
+    public String toString() {
+        return name() + ": precedence=" + precedence() + ", associative=" + associative() + ", no. operands=" + operands();
+    }
     
     public SciValue execute(List<SciValue> params) {
         if (params.size() == operands()) {
