@@ -40,7 +40,6 @@ public class SciExpression {
         operators.put("^", new OpPower());
         operators.put("+", new OpAdd());
         operators.put("-", new OpSubtract());
-
         operators.put("ln", new OpLn());        
     }
 
@@ -91,34 +90,26 @@ public class SciExpression {
     }
     
     public SciValue parseUnit(String unit) throws SciParseException {
-        if (unit.length() == 1) {
-            SciValue result = baseUnit.get(unit);
-            if (result != null) return result;            
-        } else if (unit.length() == 2) {
-            SciValue result = baseUnit.get(unit);
-            if (result != null) return result;
-            result = baseUnit.get(unit.substring(1, 2));
+        SciValue result = baseUnit.get(unit);
+        if (result != null) return result;
+        if (unit.length() > 1) {
+            result = baseUnit.get(unit.substring(1, unit.length()));
             if (result != null) {
                 Double prefix = SciUnit.prefix.get(unit.substring(0,1));
                 if (prefix != null) return result.multiply(new SciValue(prefix));
             } 
-        } else {
-            SciValue result = baseUnit.get(unit);
-            if (result != null) return result;
-            result = baseUnit.get(unit.substring(2, unit.length()));
-            if (result != null) {
-                Double prefix = SciUnit.prefix.get(unit.substring(0,2));
-                if (prefix != null) return result.multiply(new SciValue(prefix));
-            }
-            result = baseUnit.get(unit.substring(1, unit.length()));
-            if (result != null) {
-                Double prefix = SciUnit.prefix.get(unit.substring(0,1));
-                if (prefix != null) return result.multiply(new SciValue(prefix));                
+            if (unit.length() > 2) {
+                result = baseUnit.get(unit.substring(2, unit.length()));
+                if (result != null) {
+                    Double prefix = SciUnit.prefix.get(unit.substring(0,2));
+                    if (prefix != null) return result.multiply(new SciValue(prefix));
+                }            
             }
         }
         throw new SciParseException("Unit '" + unit + "' is not found in the database");
     }
 
+    // implement Shunting-yard algorithm
     public SciValue evaluate(ArrayList<Token> tokens) throws SciParseException{
         ArrayList<Token> rpn = getReversePolishNotation(tokens);
         ArrayList<SciValue> output = new ArrayList<>();
@@ -129,14 +120,8 @@ public class SciExpression {
             } else if (tk.isType(TokenBase.Type.Unit)) {
                 output.add(parseUnit(tk.text));
             } else {
-                System.out.print("Output: ");
-                printValueList(output);                
                 var op = operators.get(tk.getText());
-                System.out.print("Op: ");
-                System.out.println(op.toString());
                 List<SciValue> args = output.subList(output.size() - op.operands(), output.size());
-                System.out.print("Arguments: ");
-                printValueList(args);
                 SciValue val = op.execute(args);
                 args.clear();
                 output.add(val);     
@@ -149,12 +134,14 @@ public class SciExpression {
         } else return output.get(0);
     }
     
+    // This function is for testing purpose
     public void printValueList(List<SciValue> values) {
         for (var value: values) {
             System.out.print(value.toString() + ", ");
         }
         System.out.println();
     }
+    
     public ArrayList<Token> parse(String expression) {
         ArrayList<Token> tokens = new ArrayList<>();
         ParseToken parseToken = new ParseToken("", ParseType.None);
